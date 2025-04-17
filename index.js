@@ -37,6 +37,7 @@ const music = {
 const isPlaying = true;
 const isPaused = false;
 const isLaunched = false;
+let statusMessage;
 
 // Client instance
 const client = new Client({
@@ -115,10 +116,12 @@ client.on("ready", () => {
 
                     //TODO: instead of sending, edit the message when needed
                     if (channel) {
-                        channel.send({embeds: [nowPlayingEmbed], components: [controls], content: MessageCJ + "### Now playing:"})
-                            .then(botMsg => {
-                                setTimeout(() => botMsg.delete(), 5000);
-                            });
+                        if (!statusMessage) {
+                            statusMessage = channel.send({embeds: [nowPlayingEmbed], components: [controls], content: MessageCJ + "### Now playing:"})
+                        }
+                        else {
+                            statusMessage.edit({embeds: [nowPlayingEmbed], components: [controls], content: MessageCJ + "### Now playing:"})
+                        }
                     }
                 }
             } else {
@@ -128,7 +131,18 @@ client.on("ready", () => {
                     state: "😎 · Chilling"
                 })
 
-                channel.send({content: MessageCJ + "###Nothing playing for now.", files: [{attachment: "CJ open.jpg"}]})
+                if (!statusMessage) {
+                    statusMessage = channel.send({
+                        content: MessageCJ + "###Nothing playing for now.",
+                        files: [{attachment: "CJ open.jpg"}]
+                    })
+                }
+                else {
+                    statusMessage.edit({
+                        content: MessageCJ + "###Nothing playing for now.",
+                        files: [{attachment: "CJ open.jpg"}]
+                    })
+                }
             }
         }, 5000)
     }
@@ -139,10 +153,18 @@ client.on("ready", () => {
                 status: "offline"
             });
 
-            channel.send({
-                content: "Le CJ est sûrement fermé, mais n'hésites pas à contacter quelqu'un pour l'ouvrir !\nLe CJ hein... pas toi... fin je sais pas mais t'as compris.",
-                files: [{attachment: "CJ closed.avif"}]
-            })
+            if (!statusMessage) {
+                statusMessage = channel.send({
+                    content: "Le CJ est sûrement fermé, mais n'hésites pas à contacter quelqu'un pour l'ouvrir !\nLe CJ hein... pas toi... fin je sais pas mais t'as compris.",
+                    files: [{attachment: "CJ closed.avif"}]
+                })
+            }
+            else {
+                statusMessage.edit({
+                    content: "Le CJ est sûrement fermé, mais n'hésites pas à contacter quelqu'un pour l'ouvrir !\nLe CJ hein... pas toi... fin je sais pas mais t'as compris.",
+                    files: [{attachment: "CJ closed.avif"}]
+                })
+            }
         }
     }
 })
