@@ -8,9 +8,10 @@ const {
     ButtonBuilder,
     ButtonStyle,
     EmbedBuilder,
+    MessageFlags,
 } = require("discord.js");
 const PREFIX = "!!"
-const MessageCJ = "Le CJ est ouvert ! Venez vous détendre."
+const MessageCJ = "# __Le CJ est ouvert ! Venez vous détendre__.\n### Now playing:"
 
 function formatTime(number) {
     return number < 10 ? '0' + number : number;
@@ -80,11 +81,12 @@ client.on("ready", () => {
                     .setDescription(`\`${formatPlayingTime(currentTime)}\` ${bar} \`${formatPlayingTime(music.duration)}\``)
 
                 //TODO: custom emojis here too
-                const controlsRow1 = new ActionRowBuilder().addComponents(
+                const controls = new ActionRowBuilder().addComponents(
                     new ButtonBuilder()
-                        .setCustomId("prev")
-                        .setEmoji("⏪")
+                        .setCustomId("down")
+                        .setEmoji("🔽")
                         .setStyle(ButtonStyle.Secondary),
+                    //TODO: change in play when pause is pressed
                     new ButtonBuilder()
                         .setCustomId("pause")
                         .setEmoji("⏸")
@@ -93,28 +95,20 @@ client.on("ready", () => {
                         .setCustomId("skip")
                         .setEmoji("⏩")
                         .setStyle(ButtonStyle.Secondary),
-                );
-
-                const controlsRow2 = new ActionRowBuilder().addComponents(
                     new ButtonBuilder()
-                        .setCustomId("down")
-                        .setEmoji("🔽")
+                        .setCustomId("up")
+                        .setEmoji("🔼")
                         .setStyle(ButtonStyle.Secondary),
                     new ButtonBuilder()
                         .setCustomId("stop")
                         .setEmoji("⏹")
                         .setStyle(ButtonStyle.Danger),
-                    new ButtonBuilder()
-                        .setCustomId("up")
-                        .setEmoji("🔼")
-                        .setStyle(ButtonStyle.Secondary),
-                )
+                );
 
                 //TODO: instead of sending, edit the message when needed
-                channel.send({embeds: [nowPlayingEmbed], components: [controlsRow1, controlsRow2]}).then(botMsg => {
-                    setTimeout(() => botMsg.delete().catch((e) => {
-                        console.log(e)
-                    }), 5000);
+                channel.send({embeds: [nowPlayingEmbed], components: [controls], content: MessageCJ})
+                    .then(botMsg => {
+                    setTimeout(() => botMsg.delete(), 5000);
                 });
             }
         } else {
@@ -134,22 +128,39 @@ client.on("interactionCreate", async interaction => {
 
     switch (interaction.customId) {
         case "up":
-            await interaction.reply({content: "🔼 Increased volume", flags: MessageFlags.Ephemeral})
-            break;
-        case "prev":
-            await interaction.reply({ content: "⏪ Previous track", flags: MessageFlags.Ephemeral});
+            await interaction
+                .reply({content: `🔼 Volume increased by ${interaction.user.username}`})
+                .then(botMsg => {
+                    setTimeout(() => botMsg.delete(), 5000);
+                });
             break;
         case "pause":
-            await interaction.reply({ content: "⏸ Paused", flags: MessageFlags.Ephemeral});
+            await interaction
+                .reply({content: `⏸ Music paused by ${interaction.user.username}`})
+                .then(botMsg => {
+                    setTimeout(() => botMsg.delete(), 5000);
+                });
             break;
         case "skip":
-            await interaction.reply({ content: "⏩ Skipped", flags: MessageFlags.Ephemeral});
+            await interaction
+                .reply({content: `⏩ ${music.title} skipped by ${interaction.user.username}`})
+                .then(botMsg => {
+                    setTimeout(() => botMsg.delete(), 5000);
+                });
             break;
         case "stop":
-            await interaction.reply({ content: "⏹ Stopped playback", flags: MessageFlags.Ephemeral});
+            await interaction
+                .reply({content: "⏹ Stopped playing musics"})
+                .then(botMsg =>{
+                    setTimeout(() => botMsg.delete(), 5000);
+                });
             break;
         case "down":
-            await interaction.reply({ content: "🔽 Decreased volume", flags: MessageFlags.Ephemeral});
+            await interaction
+                .reply({content: `🔽 Volume decreased by ${interaction.user.username}`})
+                .then(botMsg => {
+                    setTimeout(() => botMsg.delete(), 5000);
+                });
             break;
     }
 });
@@ -184,7 +195,7 @@ client.on("messageCreate", (message) => {
                         });
 
 
-                    message.channel.send({embeds: [helpEmbed]}).then(botMsg => {
+                    message.channel.send({embeds: [helpEmbed], ephemeral: true}).then(botMsg => {
                         setTimeout(() => botMsg.delete().catch(() => {
                         }), 15000);
                         setTimeout(() => message.delete().catch(() => {
@@ -215,74 +226,56 @@ client.on("messageCreate", (message) => {
                 }
             case "SKIP":
                 message.channel.send("Skipping...").then(botMsg => {
-                    setTimeout(() => botMsg.delete().catch(() => {
-                    }), 10000);
-                    setTimeout(() => message.delete().catch(() => {
-                    }), 100);
+                    setTimeout(() => botMsg.delete(), 10000);
+                    setTimeout(() => message.delete(), 100);
                 });
                 break;
             case "PLAY":
                 message.channel.send("Now playing...").then(botMsg => {
-                    setTimeout(() => botMsg.delete().catch(() => {
-                    }), 10000);
-                    setTimeout(() => message.delete().catch(() => {
-                    }), 100);
+                    setTimeout(() => botMsg.delete(), 10000);
+                    setTimeout(() => message.delete(), 100);
                 });
                 break;
             case "PAUSE":
                 message.channel.send("Pausing...").then(botMsg => {
-                    setTimeout(() => botMsg.delete().catch(() => {
-                    }), 10000);
-                    setTimeout(() => message.delete().catch(() => {
-                    }), 100);
+                    setTimeout(() => botMsg.delete(), 10000);
+                    setTimeout(() => message.delete(), 100);
                 });
                 break;
             case "STOP":
                 message.channel.send("Stopping...").then(botMsg => {
-                    setTimeout(() => botMsg.delete().catch(() => {
-                    }), 10000);
-                    setTimeout(() => message.delete().catch(() => {
-                    }), 100);
+                    setTimeout(() => botMsg.delete(), 10000);
+                    setTimeout(() => message.delete(), 100);
                 });
                 break;
             case "UP":
                 message.channel.send("Volume increased by").then(botMsg => {
-                    setTimeout(() => botMsg.delete().catch(() => {
-                    }), 2000);
-                    setTimeout(() => message.delete().catch(() => {
-                    }), 100);
+                    setTimeout(() => botMsg.delete(), 2000);
+                    setTimeout(() => message.delete(), 100);
                 });
                 break;
             case "DOWN":
                 message.channel.send("Volume decreased by").then(botMsg => {
-                    setTimeout(() => botMsg.delete().catch(() => {
-                    }), 2000);
-                    setTimeout(() => message.delete().catch(() => {
-                    }), 100);
+                    setTimeout(() => botMsg.delete(), 2000);
+                    setTimeout(() => message.delete(), 100);
                 });
                 break;
             case "LINK":
                 message.channel.send("This music comes from").then(botMsg => {
-                    setTimeout(() => botMsg.delete().catch(() => {
-                    }), 10000);
-                    setTimeout(() => message.delete().catch(() => {
-                    }), 100);
+                    setTimeout(() => botMsg.delete(), 10000);
+                    setTimeout(() => message.delete(), 100);
                 });
                 break;
             case "QUEUE":
                 message.channel.send("These are the next musics").then(botMsg => {
-                    setTimeout(() => botMsg.delete().catch(() => {
-                    }), 10000);
-                    setTimeout(() => message.delete().catch(() => {
-                    }), 100);
+                    setTimeout(() => botMsg.delete(), 10000);
+                    setTimeout(() => message.delete(), 100);
                 });
                 break;
             default:
                 message.channel.send("Command does not exist").then(botMsg => {
-                    setTimeout(() => botMsg.delete().catch(() => {
-                    }), 10000);
-                    setTimeout(() => message.delete().catch(() => {
-                    }), 100);
+                    setTimeout(() => botMsg.delete(), 10000);
+                    setTimeout(() => message.delete(), 100);
                 });
                 break;
         }
