@@ -10,7 +10,7 @@ const {
     ButtonStyle,
     EmbedBuilder,
 } = require("discord.js");
-const MessageCJ = "# __Le CJ est ouvert ! Venez vous détendre__.\n### Now playing:"
+const MessageCJ = "# __Le CJ est ouvert ! Venez vous détendre__.\n"
 //TODO: When releasing, modify these values
 const emojis = {
     play: "<:play:1362458688488734761>",
@@ -55,6 +55,7 @@ client.on("ready", () => {
         status: "online",
         activities: [{name: "Starting up...", type: ActivityType.Custom}]
     });
+    const channel = client.channels.cache.get(ChannelID);
 
     // Jukebox ON = CJ open
     if (isLaunched) {
@@ -74,7 +75,6 @@ client.on("ready", () => {
                     const s = (sec % 60).toString().padStart(2, '0');
                     return `${m}:${s}`;
                 };
-                const channel = client.channels.cache.get(ChannelID);
 
                 client.user.setActivity({
                     type: ActivityType.Custom,
@@ -114,10 +114,12 @@ client.on("ready", () => {
                     );
 
                     //TODO: instead of sending, edit the message when needed
-                    channel.send({embeds: [nowPlayingEmbed], components: [controls], content: MessageCJ})
-                        .then(botMsg => {
-                            setTimeout(() => botMsg.delete(), 5000);
-                        });
+                    if (channel) {
+                        channel.send({embeds: [nowPlayingEmbed], components: [controls], content: MessageCJ + "### Now playing:"})
+                            .then(botMsg => {
+                                setTimeout(() => botMsg.delete(), 5000);
+                            });
+                    }
                 }
             } else {
                 client.user.setActivity({
@@ -125,12 +127,13 @@ client.on("ready", () => {
                     name: "Custom Waiting status",
                     state: "😎 · Chilling"
                 })
+
+                channel.send({content: MessageCJ + "###Nothing playing for now.", files: [{attachment: "CJ open.jpg"}]})
             }
         }, 5000)
     }
     // Jukebox OFF = CJ closed potentially
     else {
-        const channel = client.channels.cache.get(ChannelID);
         if (channel) {
             client.user.setPresence({
                 status: "offline"
