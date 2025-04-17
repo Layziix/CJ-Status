@@ -36,7 +36,7 @@ const music = {
 }
 const isPlaying = true;
 const isPaused = false;
-const isLaunched = false;
+const isLaunched = true;
 let statusMessage;
 
 // Client instance
@@ -117,10 +117,21 @@ client.on("ready", () => {
                     //TODO: instead of sending, edit the message when needed
                     if (channel) {
                         if (!statusMessage) {
-                            statusMessage = channel.send({embeds: [nowPlayingEmbed], components: [controls], content: MessageCJ + "### Now playing:"})
-                        }
-                        else {
-                            statusMessage.edit({embeds: [nowPlayingEmbed], components: [controls], content: MessageCJ + "### Now playing:"})
+                            (async () => {
+                                statusMessage = await channel.send({
+                                    embeds: [nowPlayingEmbed],
+                                    components: [controls],
+                                    content: MessageCJ + "### Now playing:"
+                                })
+                            })();
+                        } else {
+                            (async () => {
+                                await statusMessage.edit({
+                                    embeds: [nowPlayingEmbed],
+                                    components: [controls],
+                                    content: MessageCJ + "### Now playing:"
+                                })
+                            })();
                         }
                     }
                 }
@@ -132,16 +143,19 @@ client.on("ready", () => {
                 })
 
                 if (!statusMessage) {
-                    statusMessage = channel.send({
-                        content: MessageCJ + "###Nothing playing for now.",
-                        files: [{attachment: "CJ open.jpg"}]
-                    })
-                }
-                else {
-                    statusMessage.edit({
-                        content: MessageCJ + "###Nothing playing for now.",
-                        files: [{attachment: "CJ open.jpg"}]
-                    })
+                    (async () => {
+                        statusMessage = channel.send({
+                            content: MessageCJ + "###Nothing playing for now.",
+                            files: [{attachment: "CJ open.jpg"}]
+                        })
+                    })();
+                } else {
+                    (async () => {
+                        statusMessage.edit({
+                            content: MessageCJ + "###Nothing playing for now.",
+                            files: [{attachment: "CJ open.jpg"}]
+                        })
+                    })();
                 }
             }
         }, 5000)
@@ -153,17 +167,18 @@ client.on("ready", () => {
                 status: "offline"
             });
 
-            if (!statusMessage) {
+            if (!statusMessage) {(async () => {
                 statusMessage = channel.send({
                     content: "Le CJ est sûrement fermé, mais n'hésites pas à contacter quelqu'un pour l'ouvrir !\nLe CJ hein... pas toi... fin je sais pas mais t'as compris.",
                     files: [{attachment: "CJ closed.avif"}]
                 })
-            }
-            else {
+            })();
+            } else {(async () => {
                 statusMessage.edit({
                     content: "Le CJ est sûrement fermé, mais n'hésites pas à contacter quelqu'un pour l'ouvrir !\nLe CJ hein... pas toi... fin je sais pas mais t'as compris.",
                     files: [{attachment: "CJ closed.avif"}]
                 })
+            })();
             }
         }
     }
