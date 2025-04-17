@@ -128,10 +128,14 @@ client.on("ready", () => {
             }
         }, 5000)
     }
-    // Jukebox OFF = CJ closed
+    // Jukebox OFF = CJ closed potentially
     else {
         const channel = client.channels.cache.get(ChannelID);
         if (channel) {
+            client.user.setPresence({
+                status: "offline"
+            });
+
             channel.send({
                 content: "Le CJ est sûrement fermé, mais n'hésites pas à contacter quelqu'un pour l'ouvrir !\nLe CJ hein... pas toi... fin je sais pas mais t'as compris.",
                 files: [{attachment: "CJ closed.avif"}]
