@@ -6,7 +6,9 @@ const GUILD_ID = "1362155963066482758"; // testing only
 const commands = [
     new SlashCommandBuilder()
         .setName("help")
-        .setDescription("Displays help info")
+        .setDescription("Displays help info about ...")
+        .addSubcommand(sub =>
+            sub.setName("all").setDescription("See all commands"))
         .addSubcommand( sub =>
             sub.setName("play").setDescription("Get help about /play")
         )
