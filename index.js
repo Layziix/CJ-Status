@@ -8,13 +8,11 @@ const {
     ButtonBuilder,
     ButtonStyle,
     EmbedBuilder,
-    MessageFlags,
 } = require("discord.js");
-const PREFIX = "!!"
 const MessageCJ = "# __Le CJ est ouvert ! Venez vous détendre__.\n### Now playing:"
 
 function formatTime(number) {
-    return number < 10 ? '0' + number : number;
+    return number.toString().padStart(2, '0');
 }
 
 //TODO: link with the existing jukebox app later
@@ -108,8 +106,8 @@ client.on("ready", () => {
                 //TODO: instead of sending, edit the message when needed
                 channel.send({embeds: [nowPlayingEmbed], components: [controls], content: MessageCJ})
                     .then(botMsg => {
-                    setTimeout(() => botMsg.delete(), 5000);
-                });
+                        setTimeout(() => botMsg.delete(), 5000);
+                    });
             }
         } else {
             client.user.setActivity({
@@ -122,165 +120,259 @@ client.on("ready", () => {
     }, 5000)
 })
 
-// Interactions pressed by the user under the bot playing message
+
 client.on("interactionCreate", async interaction => {
-    if (!interaction.isButton()) return;
+    // When seeing messages for slash commands
+    if (interaction.isChatInputCommand()) {
+        const command = interaction.commandName;
 
-    switch (interaction.customId) {
-        case "up":
-            await interaction
-                .reply({content: `🔼 Volume increased by ${interaction.user.username}`})
-                .then(botMsg => {
-                    setTimeout(() => botMsg.delete(), 5000);
+        switch (command) {
+            case "help":
+                const subCommand = interaction.options.getSubcommand();
+                const time = new Date();
+                const helpEmbed = new EmbedBuilder().setColor(0xFF0000).setFooter({
+                    text: `CJ-Status Bot · ${formatTime(time.getHours())}:${formatTime(time.getMinutes())}`,
+                    iconURL: client.user.displayAvatarURL()
                 });
-            break;
-        case "pause":
-            await interaction
-                .reply({content: `⏸ Music paused by ${interaction.user.username}`})
-                .then(botMsg => {
-                    setTimeout(() => botMsg.delete(), 5000);
-                });
-            break;
-        case "skip":
-            await interaction
-                .reply({content: `⏩ ${music.title} skipped by ${interaction.user.username}`})
-                .then(botMsg => {
-                    setTimeout(() => botMsg.delete(), 5000);
-                });
-            break;
-        case "stop":
-            await interaction
-                .reply({content: "⏹ Stopped playing musics"})
-                .then(botMsg =>{
-                    setTimeout(() => botMsg.delete(), 5000);
-                });
-            break;
-        case "down":
-            await interaction
-                .reply({content: `🔽 Volume decreased by ${interaction.user.username}`})
-                .then(botMsg => {
-                    setTimeout(() => botMsg.delete(), 5000);
-                });
-            break;
-    }
-});
 
-// When seeing messages for commands
-client.on("messageCreate", (message) => {
-    // TODO: check only messages in ChannelID
-    if (message.content.startsWith(PREFIX)) {
-        const input = message.content.slice(PREFIX.length).trim().split(" ");
-        const command = input.shift();
+                switch (subCommand) {
+                    default:
+                        helpEmbed
+                            .setTitle("CJ-Status Help Menu (10 commands)")
+                            .setDescription("Use `/help <command>` to get more info.")
+                            .addFields(
+                                {
+                                    name: "Music",
+                                    value: "`play`, `pause`, `skip`, `stop`, `up`, `down`, `link`, `queue`, `add`",
+                                    inline: false
+                                },
+                                {name: "Bot", value: "`help`", inline: false}
+                            )
 
-        switch (command.toUpperCase()) {
-            // TODO: add messages to the other command
-            case "HELP":
-                if (input.length === 0) {
-                    let time = new Date();
-                    const helpEmbed = new EmbedBuilder()
-                        .setColor(0xFF0000)
-                        .setTitle("CJ-Status Help Menu (9 commands)")
-                        .setDescription("Do " + PREFIX + "help <\command> to show more information about it.")
-                        .addFields(
-                            {
-                                name: "Music",
-                                value: "`PLAY`, `PAUSE`, `SKIP`, `STOP`, `UP`, `DOWN`, `LINK`, `QUEUE`",
-                                inline: false
-                            },
-                            {name: "Bot", value: "`HELP`", inline: false}
-                        )
-                        .setFooter({
-                            text: "CJ-Status Bot · " + formatTime(time.getHours()) + ":" + formatTime(time.getMinutes()),
-                            iconURL: client.user.displayAvatarURL()
-                        });
+                        await interaction.reply({embeds: [helpEmbed], ephemeral: true});
+                        break;
+                    case "play":
+                        helpEmbed
+                            .setTitle(`CJ-Status Help Menu > ${subCommand}`)
+                            .setDescription("Resumes the music when it has been paused previously.")
+                            .setFooter({
+                                text: `CJ-Status Bot · ${formatTime(time.getHours())}:${formatTime(time.getMinutes())}`,
+                                iconURL: client.user.displayAvatarURL()
+                            });
 
+                        await interaction.reply({embeds: [helpEmbed], ephemeral: true});
+                        break;
+                    case "pause":
+                        helpEmbed
+                            .setTitle(`CJ-Status Help Menu for /${subCommand}`)
+                            .setDescription("Pauses the music for an undetermined period of time. Can be resumed with /play.")
 
-                    message.channel.send({embeds: [helpEmbed], ephemeral: true}).then(botMsg => {
-                        setTimeout(() => botMsg.delete().catch(() => {
-                        }), 15000);
-                        setTimeout(() => message.delete().catch(() => {
-                        }), 100);
-                    });
-                    break;
-                } else {
-                    const commandInfo = input.shift();
-                    switch (commandInfo.toUpperCase()) {
-                        case "PLAY":
-                            break;
-                        case "PAUSE":
-                            break;
-                        case "SKIP":
-                            break;
-                        case "STOP":
-                            break;
-                        case "UP":
-                            break;
-                        case "DOWN":
-                            break;
-                        case "LINK":
-                            break;
-                        case "QUEUE":
-                            break;
-                    }
-                    break;
+                        await interaction.reply({embeds: [helpEmbed], ephemeral: true});
+                        break;
+                    case "skip":
+                        helpEmbed
+                            .setTitle(`CJ-Status Help Menu for /${subCommand}`)
+                            .setDescription("Skips the current track to play the next one.")
+
+                        await interaction.reply({embeds: [helpEmbed], ephemeral: true});
+                        break;
+                    case "stop":
+                        helpEmbed
+                            .setTitle(`CJ-Status Help Menu for /${subCommand}`)
+                            .setDescription("Completely stops all the musics, thus clearing the queue. Careful when using it.")
+
+                        await interaction.reply({embeds: [helpEmbed], ephemeral: true});
+                        break;
+                    case "down":
+                        helpEmbed
+                            .setTitle(`CJ-Status Help Menu for /${subCommand}`)
+                            .setDescription("Decreases the volume of the jukebox by 5%.")
+
+                        await interaction.reply({embeds: [helpEmbed], ephemeral: true});
+                        break;
+                    case "up":
+                        helpEmbed
+                            .setTitle(`CJ-Status Help Menu for /${subCommand}`)
+                            .setDescription("Increases the volume of the jukebox by 5%.")
+
+                        await interaction.reply({embeds: [helpEmbed], ephemeral: true});
+                        break;
+                    case "link":
+                        helpEmbed
+                            .setTitle(`CJ-Status Help Menu for /${subCommand}`)
+                            .setDescription("Gives you the link where the music is coming from.")
+
+                        await interaction.reply({embeds: [helpEmbed], ephemeral: true});
+                        break;
+                    case "queue":
+                        helpEmbed
+                            .setTitle(`CJ-Status Help Menu for /${subCommand}`)
+                            .setDescription("Shows the next musics waiting in the queue to be played.")
+
+                        await interaction.reply({embeds: [helpEmbed], ephemeral: true});
+                        break;
+                    case "add":
+                        helpEmbed
+                            .setTitle(`CJ-Status Help Menu for /${subCommand}`)
+                            .setDescription("Adds a new music to the queue.")
+                            .addFields({ name: "Usage", value: "/add <music_link>", inline: false })
+
+                        await interaction.reply({embeds: [helpEmbed], ephemeral: true});
+                        break;
                 }
-            case "SKIP":
-                message.channel.send("Skipping...").then(botMsg => {
-                    setTimeout(() => botMsg.delete(), 10000);
-                    setTimeout(() => message.delete(), 100);
-                });
                 break;
-            case "PLAY":
-                message.channel.send("Now playing...").then(botMsg => {
-                    setTimeout(() => botMsg.delete(), 10000);
-                    setTimeout(() => message.delete(), 100);
-                });
+            case "up":
+                await interaction
+                    .reply({content: `🔼 Volume increased by ${interaction.user.username}`})
+                    .then(botMsg => {
+                        setTimeout(() => botMsg.delete(), 5000);
+                    });
                 break;
-            case "PAUSE":
-                message.channel.send("Pausing...").then(botMsg => {
-                    setTimeout(() => botMsg.delete(), 10000);
-                    setTimeout(() => message.delete(), 100);
-                });
+            case "pause":
+                await interaction
+                    .reply({content: `⏸ Music paused by ${interaction.user.username}`})
+                    .then(botMsg => {
+                        setTimeout(() => botMsg.delete(), 5000);
+                    });
                 break;
-            case "STOP":
-                message.channel.send("Stopping...").then(botMsg => {
-                    setTimeout(() => botMsg.delete(), 10000);
-                    setTimeout(() => message.delete(), 100);
-                });
+            case "play":
+                await interaction
+                    .reply({content: `▶️ ${music.title} resumed by ${interaction.user.username}`})
+                    .then(botMsg => {
+                        setTimeout(() => botMsg.delete(), 5000);
+                    });
                 break;
-            case "UP":
-                message.channel.send("Volume increased by").then(botMsg => {
-                    setTimeout(() => botMsg.delete(), 2000);
-                    setTimeout(() => message.delete(), 100);
-                });
+            case "skip":
+                await interaction
+                    .reply({content: `⏩ ${music.title} skipped by ${interaction.user.username}`})
+                    .then(botMsg => {
+                        setTimeout(() => botMsg.delete(), 5000);
+                    });
                 break;
-            case "DOWN":
-                message.channel.send("Volume decreased by").then(botMsg => {
-                    setTimeout(() => botMsg.delete(), 2000);
-                    setTimeout(() => message.delete(), 100);
-                });
+            case "stop":
+                await interaction
+                    .reply({content: "⏹ Stopped playing musics"})
+                    .then(botMsg => {
+                        setTimeout(() => botMsg.delete(), 5000);
+                    });
                 break;
-            case "LINK":
-                message.channel.send("This music comes from").then(botMsg => {
-                    setTimeout(() => botMsg.delete(), 10000);
-                    setTimeout(() => message.delete(), 100);
-                });
-                break;
-            case "QUEUE":
-                message.channel.send("These are the next musics").then(botMsg => {
-                    setTimeout(() => botMsg.delete(), 10000);
-                    setTimeout(() => message.delete(), 100);
-                });
-                break;
-            default:
-                message.channel.send("Command does not exist").then(botMsg => {
-                    setTimeout(() => botMsg.delete(), 10000);
-                    setTimeout(() => message.delete(), 100);
-                });
+            case "down":
+                await interaction
+                    .reply({content: `🔽 Volume decreased by ${interaction.user.username}`})
+                    .then(botMsg => {
+                        setTimeout(() => botMsg.delete(), 5000);
+                    });
                 break;
         }
     }
-})
 
+    // Interactions pressed by the user under the bot playing message
+    if (interaction.isButton()) {
+        switch (interaction.customId) {
+            case "up":
+                await interaction
+                    .reply({content: `🔼 Volume increased by ${interaction.user.username}`})
+                    .then(botMsg => {
+                        setTimeout(() => botMsg.delete(), 5000);
+                    });
+                break;
+            case "pause":
+                await interaction
+                    .reply({content: `⏸ Music paused by ${interaction.user.username}`})
+                    .then(botMsg => {
+                        setTimeout(() => botMsg.delete(), 5000);
+                    });
+                break;
+            case "play":
+                await interaction
+                    .reply({content: `▶️ ${music.title} resumed by ${interaction.user.username}`})
+                    .then(botMsg => {
+                        setTimeout(() => botMsg.delete(), 5000);
+                    });
+                break;
+            case "skip":
+                await interaction
+                    .reply({content: `⏩ ${music.title} skipped by ${interaction.user.username}`})
+                    .then(botMsg => {
+                        setTimeout(() => botMsg.delete(), 5000);
+                    });
+                break;
+            case "stop":
+                await interaction
+                    .reply({content: "⏹ Stopped playing musics"})
+                    .then(botMsg => {
+                        setTimeout(() => botMsg.delete(), 5000);
+                    });
+                break;
+            case "down":
+                await interaction
+                    .reply({content: `🔽 Volume decreased by ${interaction.user.username}`})
+                    .then(botMsg => {
+                        setTimeout(() => botMsg.delete(), 5000);
+                    });
+                break;
+        }
+    }
+});
+
+
+/*
+    case
+        "play"
+    :
+        await interaction.reply({content: "▶️ Now playing...", ephemeral: true});
+        break;
+    case
+        "pause"
+    :
+        await interaction.reply({content: "⏸ Paused", ephemeral: true});
+        break;
+    case
+        "skip"
+    :
+        await interaction.reply({content: "⏩ Skipping...", ephemeral: true});
+        break;
+    case
+        "stop"
+    :
+        await interaction.reply({content: "⏹ Stopping...", ephemeral: true});
+        break;
+    case
+        "up"
+    :
+        await interaction.reply({content: `🔊 Volume increased by <@${user.id}>`, ephemeral: true});
+        break;
+    case
+        "down"
+    :
+        await interaction.reply({content: `🔉 Volume decreased by <@${user.id}>`, ephemeral: true});
+        break;
+    case
+        "link"
+    :
+        await interaction.reply({
+            content: "🎵 This music comes from [SoundCloud](https://soundcloud.com/)",
+            ephemeral: true
+        });
+        break;
+    case
+        "queue"
+    :
+        await interaction.reply({
+            content: "📜 Here’s the current queue:\n1. Track A\n2. Track B\n3. Track C",
+            ephemeral: true
+        });
+        break;
+    case
+        "add"
+    :
+        await interaction.reply({
+            content: "Adding a music"
+        });
+        break;
+    }
+}
+
+*/
 // Log the Bot
 client.login(TOKEN);
