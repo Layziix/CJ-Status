@@ -1,5 +1,5 @@
 //TODO: When releasing, modify these values
-const TOKEN = "MTM2MjE1NDI3ODI1MjMxODkzMw.GDfJkR.UdiIne2XS9VvCkgUMaBFrTuYcVxl-z058S5xwk";
+const TOKEN = "MTM2MjE1NDI3ODI1MjMxODkzMw.GucOze.UopHkVReBmt6lD3juYFWTx0JmbuemfuPLq52t8";
 const ChannelID = "1362160035286876281";
 const {
     Client,
@@ -35,6 +35,8 @@ const music = {
     duration: 134,
 }
 const isPlaying = true;
+const isPaused = false;
+const isLaunched = false;
 
 // Client instance
 const client = new Client({
@@ -45,8 +47,6 @@ const client = new Client({
     ]
 });
 
-// Custom message offline
-
 // Bot online
 client.on("ready", () => {
     console.log(`${client.user.tag} ready!`);
@@ -56,78 +56,88 @@ client.on("ready", () => {
         activities: [{name: "Starting up...", type: ActivityType.Custom}]
     });
 
-    //TODO: clear previous offline message
-    setInterval(() => {
-        if (isPlaying) {
-            // TODO: update dynamically this with the "backend"
-            const currentTime = 99;
-            const progressBarLength = 10;
+    // Jukebox ON = CJ open
+    if (isLaunched) {
+        //TODO: clear previous offline message
+        setInterval(() => {
+            if (isPlaying) {
+                // TODO: update dynamically this with the "backend"
+                const currentTime = 99;
+                const progressBarLength = 10;
 
-            const percentage = currentTime / music.duration;
-            const progress = Math.round(progressBarLength * percentage);
-            const bar = '🟪'.repeat(progress) + '🟥' + '⬜'.repeat(progressBarLength - progress);
+                const percentage = currentTime / music.duration;
+                const progress = Math.round(progressBarLength * percentage);
+                const bar = '🟪'.repeat(progress) + '🟥' + '⬜'.repeat(progressBarLength - progress);
 
-            const formatPlayingTime = (sec) => {
-                const m = Math.floor(sec / 60).toString().padStart(2, '0');
-                const s = (sec % 60).toString().padStart(2, '0');
-                return `${m}:${s}`;
-            };
-            const channel = client.channels.cache.get(ChannelID);
+                const formatPlayingTime = (sec) => {
+                    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+                    const s = (sec % 60).toString().padStart(2, '0');
+                    return `${m}:${s}`;
+                };
+                const channel = client.channels.cache.get(ChannelID);
 
-            client.user.setActivity({
-                type: ActivityType.Custom,
-                name: "Custom Listening status",
-                // TODO: change to a better custom emoji from the server
-                state: `${emojis.playing} · Listening to ` + music.title
-            });
+                client.user.setActivity({
+                    type: ActivityType.Custom,
+                    name: "Custom Listening status",
+                    state: `${emojis.playing} · Listening to ` + music.title
+                });
 
-            if (channel && channel.isTextBased()) {
-                const nowPlayingEmbed = new EmbedBuilder()
-                    .setColor(0xFF0000)
-                    .setTitle(music.title)
-                    .setAuthor({name: music.artist})
-                    .setThumbnail(music.thumbnail)
-                    .setDescription(`\`${formatPlayingTime(currentTime)}\` ${bar} \`${formatPlayingTime(music.duration)}\``)
+                if (channel && channel.isTextBased()) {
+                    const nowPlayingEmbed = new EmbedBuilder()
+                        .setColor(0xFF0000)
+                        .setTitle(music.title)
+                        .setAuthor({name: music.artist})
+                        .setThumbnail(music.thumbnail)
+                        .setDescription(`\`${formatPlayingTime(currentTime)}\` ${bar} \`${formatPlayingTime(music.duration)}\``)
 
-                //TODO: custom emojis here too
-                const controls = new ActionRowBuilder().addComponents(
-                    new ButtonBuilder()
-                        .setCustomId("down")
-                        .setEmoji(`${emojis.volumeDown}`)
-                        .setStyle(ButtonStyle.Secondary),
-                    new ButtonBuilder()
-                        .setCustomId("pause")
-                        .setEmoji(`${emojis.pause}`)
-                        .setStyle(ButtonStyle.Secondary),
-                    new ButtonBuilder()
-                        .setCustomId("skip")
-                        .setEmoji(`${emojis.skip}`)
-                        .setStyle(ButtonStyle.Secondary),
-                    new ButtonBuilder()
-                        .setCustomId("up")
-                        .setEmoji(`${emojis.volumeUp}`)
-                        .setStyle(ButtonStyle.Secondary),
-                    new ButtonBuilder()
-                        .setCustomId("stop")
-                        .setEmoji(`${emojis.stop}`)
-                        .setStyle(ButtonStyle.Secondary),
-                );
+                    const controls = new ActionRowBuilder().addComponents(
+                        new ButtonBuilder()
+                            .setCustomId("down")
+                            .setEmoji(`${emojis.volumeDown}`)
+                            .setStyle(ButtonStyle.Secondary),
+                        new ButtonBuilder()
+                            .setCustomId("pause")
+                            .setEmoji(`${emojis.pause}`)
+                            .setStyle(ButtonStyle.Secondary),
+                        new ButtonBuilder()
+                            .setCustomId("skip")
+                            .setEmoji(`${emojis.skip}`)
+                            .setStyle(ButtonStyle.Secondary),
+                        new ButtonBuilder()
+                            .setCustomId("up")
+                            .setEmoji(`${emojis.volumeUp}`)
+                            .setStyle(ButtonStyle.Secondary),
+                        new ButtonBuilder()
+                            .setCustomId("stop")
+                            .setEmoji(`${emojis.stop}`)
+                            .setStyle(ButtonStyle.Secondary),
+                    );
 
-                //TODO: instead of sending, edit the message when needed
-                channel.send({embeds: [nowPlayingEmbed], components: [controls], content: MessageCJ})
-                    .then(botMsg => {
-                        setTimeout(() => botMsg.delete(), 5000);
-                    });
+                    //TODO: instead of sending, edit the message when needed
+                    channel.send({embeds: [nowPlayingEmbed], components: [controls], content: MessageCJ})
+                        .then(botMsg => {
+                            setTimeout(() => botMsg.delete(), 5000);
+                        });
+                }
+            } else {
+                client.user.setActivity({
+                    type: ActivityType.Custom,
+                    name: "Custom Waiting status",
+                    state: "😎 · Chilling"
+                })
             }
-        } else {
-            client.user.setActivity({
-                type: ActivityType.Custom,
-                name: "Custom Waiting status",
-                // TODO: change to a better custom emoji from the server
-                state: "😎 · Chilling"
+        }, 5000)
+    }
+    // Jukebox OFF = CJ closed
+    else {
+        const channel = client.channels.cache.get(ChannelID);
+        if (channel) {
+            channel.send({
+                content: "Le CJ est sûrement fermé, mais n'hésites pas à contacter quelqu'un pour l'ouvrir !\nLe CJ hein... pas toi... fin je sais pas mais t'as compris.",
+                files: [{attachment: "CJ closed.avif"}]
             })
         }
-    }, 5000)
+    }
 })
 
 
@@ -225,7 +235,7 @@ client.on("interactionCreate", async interaction => {
                         helpEmbed
                             .setTitle(`CJ-Status Help Menu for /${subCommand}`)
                             .setDescription("Adds a new music to the queue.")
-                            .addFields({ name: "Usage", value: "/add <music_link>", inline: false })
+                            .addFields({name: "Usage", value: "/add <music_link>", inline: false})
 
                         await interaction.reply({embeds: [helpEmbed], ephemeral: true});
                         break;
