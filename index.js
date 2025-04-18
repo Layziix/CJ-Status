@@ -1,5 +1,6 @@
 const {retrieveData, seeInfo} = require("./Gather-data.js")
 // TODO: add a liking system for each discord user => own db ?
+// TODO: add a system were only specific users can use commands ?
 const {
     Client,
     ActivityType,
