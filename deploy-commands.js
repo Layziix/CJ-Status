@@ -1,7 +1,8 @@
 const { REST, Routes, SlashCommandBuilder } = require("discord.js");
-const TOKEN = "MTM2MjE1NDI3ODI1MjMxODkzMw.GucOze.UopHkVReBmt6lD3juYFWTx0JmbuemfuPLq52t8";
+// TODO: secure these data
+const TOKEN = "MTM2MjE1NDI3ODI1MjMxODkzMw.GM1Nie.7jMUNaMHvSPr7jHplhKNwPIWeQEI4fz2-IiQow";
 const CLIENT_ID = "1362154278252318933";
-const GUILD_ID = "1362155963066482758"; // testing only
+const GUILD_ID = "1362155963066482758";
 
 const commands = [
     new SlashCommandBuilder()

@@ -1,7 +1,5 @@
-//TODO: When releasing, modify these values
-const TOKEN = "MTM2MjE1NDI3ODI1MjMxODkzMw.GucOze.UopHkVReBmt6lD3juYFWTx0JmbuemfuPLq52t8";
-const ChannelID = "1362160035286876281";
-
+const {retrieveData, seeInfo} = require("./Gather-data.js")
+// TODO: add a liking system for each discord user => own db ?
 const {
     Client,
     ActivityType,
@@ -11,6 +9,10 @@ const {
     ButtonStyle,
     EmbedBuilder,
 } = require("discord.js");
+
+// TODO: secure these data
+const TOKEN = "MTM2MjE1NDI3ODI1MjMxODkzMw.GM1Nie.7jMUNaMHvSPr7jHplhKNwPIWeQEI4fz2-IiQow";
+const ChannelID = "1362160035286876281";
 
 const MessageCJ = "# __Le CJ est ouvert ! Venez vous détendre__.\n"
 //TODO: When releasing, modify these values
@@ -23,20 +25,29 @@ const emojis = {
     volumeUp: "<:volumeUp:1362458685745402096>",
     volumeDown: "<:volumeDown:1362458684462075954>",
 }
-
-//TODO: link with the existing jukebox app later ("backend")
-//TODO : remove later (only here for test)
-const music = {
-    title: "music name",
-    artist: "music artist",
-    thumbnail: "https://i1.sndcdn.com/artworks-000300305496-o4ettj-t500x500.jpg",
-    duration: 134,
-}
-const isPlaying = true;
-const isPaused = false;
 const isLaunched = true;
 const updateTime = 5000;
+
+//TODO: link with the existing jukebox app later ("backend")
+/*
+/api/user/signup with UserData (username, password) from the cj
+/api/user/login with UserData from the cj
+/api/player/add_to_queue with id (int32)
+/api/player/play
+/api/player/pause
+/api/player/next
+/api/player/set_volume with the number
+/api/player/seek with a position number
+*/
+
 const formatTime = (n) => n.toString().padStart(2, '0');
+const formatPlayingTime = (n) => {
+    const hours = Math.floor(n / 3600);
+    const minutes = Math.floor(n / 60);
+    const seconds = Math.floor(n / 60);
+
+    return hours === 0 ? `${formatTime(minutes)}:${formatTime(seconds)}` : `${formatTime(hours)}:${formatTime(minutes)}`
+};
 let statusMessage;
 
 // Client instance
@@ -94,20 +105,20 @@ client.on("ready", async () => {
 
     // CJ Open
     if (isLaunched) {
-        setInterval(async () => {
+        const launchedFun = async (isPlaying, music) => {
             // music playing
             if (isPlaying) {
                 const currentTime = 99;
                 const percentage = currentTime / music.duration;
                 const progress = Math.round(10 * percentage);
-                const bar = '🟪'.repeat(progress) + '🟥' + '⬜'.repeat(10 - progress);
+                const bar = '▬'.repeat(progress) + '⭕' + '-'.repeat(10 - progress);
 
                 const nowPlayingEmbed = new EmbedBuilder()
                     .setColor(0xFF0000)
                     .setTitle(music.title)
                     .setAuthor({name: music.artist})
-                    .setThumbnail(music.thumbnail)
-                    .setDescription(`\`${formatTime(currentTime)}\` ${bar} \`${formatTime(music.duration)}\``);
+                    .setThumbnail(music.albumart_url)
+                    .setDescription(`\`${formatPlayingTime(currentTime)}\` ${bar} \`${formatPlayingTime(music.duration)}\``);
 
                 const controls = new ActionRowBuilder().addComponents(
                     new ButtonBuilder().setCustomId("down").setEmoji(emojis.volumeDown).setStyle(ButtonStyle.Secondary),
@@ -123,7 +134,8 @@ client.on("ready", async () => {
                 updatePresence(false);
                 await updateStatusMessage(`${MessageCJ}### Nothing playing for now.`, null, null, "CJ open.jpg");
             }
-        }, updateTime);
+        }
+        setInterval(retrieveData(launchedFun), updateTime)
     }
 
     // CJ Closed
@@ -134,7 +146,7 @@ client.on("ready", async () => {
             "Le CJ est sûrement fermé, mais n'hésites pas à contacter quelqu'un pour l'ouvrir !\nLe CJ hein... pas toi... fin je sais pas mais t'as compris.",
             null,
             null,
-            "CJ closed.avif"
+            "./images/CJ closed.avif"
         );
     }
 })
@@ -176,13 +188,16 @@ client.on("interactionCreate", async interaction => {
     };
 
     // Basic cat responses
+    // TODO: backend
     const chatResponses = {
         up: `🔼 Volume increased by ${interaction.user.username}`,
         down: `🔽 Volume decreased by ${interaction.user.username}`,
         pause: `⏸ Music paused by ${interaction.user.username}`,
         play: `▶️ ${music.title} resumed by ${interaction.user.username}`,
         skip: `⏩ ${music.title} skipped by ${interaction.user.username}`,
-        stop: `${interaction.user.username} stopped all musics`
+        stop: `${interaction.user.username} stopped all musics`,
+        queue: seeInfo("queue"),
+        link: seeInfo("link"),
     };
 
     // Slash command handler
@@ -211,6 +226,7 @@ client.on("interactionCreate", async interaction => {
             return interaction.reply({embeds: [helpEmbed], ephemeral: true});
         }
 
+        // TODO: <add> commands backend
         if (chatResponses[commandName]) {
             return replyAndDelete(interaction, chatResponses[commandName]);
         }
