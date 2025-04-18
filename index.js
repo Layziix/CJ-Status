@@ -1,6 +1,7 @@
 //TODO: When releasing, modify these values
 const TOKEN = "MTM2MjE1NDI3ODI1MjMxODkzMw.GucOze.UopHkVReBmt6lD3juYFWTx0JmbuemfuPLq52t8";
 const ChannelID = "1362160035286876281";
+
 const {
     Client,
     ActivityType,
@@ -10,6 +11,7 @@ const {
     ButtonStyle,
     EmbedBuilder,
 } = require("discord.js");
+
 const MessageCJ = "# __Le CJ est ouvert ! Venez vous détendre__.\n"
 //TODO: When releasing, modify these values
 const emojis = {
@@ -33,8 +35,9 @@ const music = {
 const isPlaying = true;
 const isPaused = false;
 const isLaunched = true;
-let statusMessage;
+const updateTime = 5000;
 const formatTime = (n) => n.toString().padStart(2, '0');
+let statusMessage;
 
 // Client instance
 const client = new Client({
@@ -120,7 +123,7 @@ client.on("ready", async () => {
                 updatePresence(false);
                 await updateStatusMessage(`${MessageCJ}### Nothing playing for now.`, null, null, "CJ open.jpg");
             }
-        }, 5000);
+        }, updateTime);
     }
 
     // CJ Closed
@@ -140,7 +143,7 @@ client.on("interactionCreate", async interaction => {
     const replyAndDelete = async (interaction, content) => {
         const msg = await interaction.reply({content, fetchReply: true});
         setTimeout(() => msg.delete().catch(() => {
-        }), 5000);
+        }), updateTime);
     };
 
     // Help command descriptions
