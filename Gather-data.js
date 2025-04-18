@@ -18,7 +18,7 @@ const retrieveData = async (f) => {
         });
 }
 
-const seeInfo = async(info) => {
+const seeInfo = async (info) => {
     fetch(CJ_DATA_LINK)
         .then(response => {
             const contentType = response.headers.get('content-type');
@@ -33,8 +33,11 @@ const seeInfo = async(info) => {
                 case "queue":
                     const queueEmbed = new EmbedBuilder()
                         .setColor(0xFF0000)
+                        .setTitle("Showing the queue")
                         .setDescription(`\`${formatPlayingTime(currentTime)}\` ${bar} \`${formatPlayingTime(music.duration)}\``);
-                    data.playlist.map((play,index) => {queueEmbed.addFields({name: `${index}. ${play.title}`, value: `${play.artist} (${play.user})` })})
+                    data.playlist.map((play, index) => {
+                        queueEmbed.addFields({name: `${index}. ${play.title}`, value: `${play.artist} (${play.user})`})
+                    })
                     break;
                 case "link":
                     data.url
@@ -43,4 +46,5 @@ const seeInfo = async(info) => {
         });
 }
 
-module.exports = retrieveData;
+module.exports = {retrieveData, seeInfo};
+

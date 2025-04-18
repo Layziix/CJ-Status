@@ -28,7 +28,7 @@ const emojis = {
 const isLaunched = true;
 const updateTime = 5000;
 
-//TODO: link with the existing jukebox app later ("backend")
+//TODO: link with the futur backend
 /*
 /api/user/signup with UserData (username, password) from the cj
 /api/user/login with UserData from the cj
@@ -135,6 +135,7 @@ client.on("ready", async () => {
                 await updateStatusMessage(`${MessageCJ}### Nothing playing for now.`, null, null, "CJ open.jpg");
             }
         }
+        // TODO: change with futur backend
         setInterval(retrieveData(launchedFun), updateTime)
     }
 
@@ -188,7 +189,7 @@ client.on("interactionCreate", async interaction => {
     };
 
     // Basic cat responses
-    // TODO: backend
+    // TODO: change with futur backend
     const chatResponses = {
         up: `🔼 Volume increased by ${interaction.user.username}`,
         down: `🔽 Volume decreased by ${interaction.user.username}`,
