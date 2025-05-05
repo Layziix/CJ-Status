@@ -1,5 +1,5 @@
-const {retrieveData, seeInfo} = require("./Gather-data.js")
-// TODO: add a liking system for each discord user => own db ?
+const {seeInfo} = require("./Gather-data.js")
+// TODO: add a liking system for each discord user => own db ??
 // TODO: add a system were only specific users can use commands ?
 const {
     Client,
@@ -14,8 +14,10 @@ const {
 // TODO: secure these data
 const TOKEN = "MTM2MjE1NDI3ODI1MjMxODkzMw.GM1Nie.7jMUNaMHvSPr7jHplhKNwPIWeQEI4fz2-IiQow";
 const ChannelID = "1362160035286876281";
+const statusMessageID = "1368718804296663153";
+const CJ_DATA_LINK = "http://jukebox.cj/sync"
 
-const MessageCJ = "# __Le CJ est ouvert ! Venez vous détendre__.\n"
+const MessageCJ = "### __Le CJ est ouvert ! Venez vous détendre__.\n"
 //TODO: When releasing, modify these values
 const emojis = {
     play: "<:play:1362458688488734761>",
@@ -26,7 +28,7 @@ const emojis = {
     volumeUp: "<:volumeUp:1362458685745402096>",
     volumeDown: "<:volumeDown:1362458684462075954>",
 }
-const isLaunched = true;
+const isJukeboxLaunched = true;
 const updateTime = 5000;
 
 //TODO: link with the futur backend
@@ -45,11 +47,10 @@ const formatTime = (n) => n.toString().padStart(2, '0');
 const formatPlayingTime = (n) => {
     const hours = Math.floor(n / 3600);
     const minutes = Math.floor(n / 60);
-    const seconds = Math.floor(n / 60);
+    const seconds = Math.floor(n % 60);
 
     return hours === 0 ? `${formatTime(minutes)}:${formatTime(seconds)}` : `${formatTime(hours)}:${formatTime(minutes)}`
 };
-let statusMessage;
 
 // Client instance
 const client = new Client({
@@ -63,29 +64,28 @@ const client = new Client({
 // Bot online
 client.on("ready", async () => {
     // Starting the bot
-    console.log(`${client.user.tag} ready!`);
     client.user.setPresence({
         status: "online",
         activities: [{name: "Starting up...", type: ActivityType.Custom}]
     });
 
-    const channel = await client.channels.fetch(ChannelID).catch(() => null);
+    const channel = await client.channels.fetch(ChannelID).catch(() => console.log("wrong channel ID"));
     if (!channel || !channel.isTextBased()) return;
 
     const updateStatusMessage = async (content, embed = null, components = null, file = null) => {
         const options = {content};
         if (embed) options.embeds = [embed];
         if (components) options.components = [components];
-        if (file) options.files = [{attachment: file}];
+        // Initialize bot message if it is not already here
 
+        const statusMessage = await channel.messages.fetch(statusMessageID)
         if (!statusMessage) {
-            statusMessage = await channel.send(options);
-        } else {
-            await statusMessage.edit(options).catch(async (err) => {
-                console.warn("Couldn’t edit message, resending...", err);
-                statusMessage = await channel.send(options);
-            });
+            const statusMessage = await channel.send(options);
         }
+        if (file) {options.files = [{attachment: file}]} else {statusMessage.removeAttachments()}
+        await statusMessage.edit(options).catch(async (err) => {
+            console.warn("Couldn’t edit message", err);
+        });
     };
 
     const updatePresence = (playing = false, music = null) => {
@@ -105,21 +105,21 @@ client.on("ready", async () => {
     };
 
     // CJ Open
-    if (isLaunched) {
-        const launchedFun = async (isPlaying, music) => {
+    if (isJukeboxLaunched) {
+            const launchedFun = async (isPlaying, music, currentTime) => {
             // music playing
             if (isPlaying) {
-                const currentTime = 99;
+                // TODO: retrieve the current time of the music
                 const percentage = currentTime / music.duration;
                 const progress = Math.round(10 * percentage);
                 const bar = '▬'.repeat(progress) + '⭕' + '-'.repeat(10 - progress);
 
                 const nowPlayingEmbed = new EmbedBuilder()
                     .setColor(0xFF0000)
-                    .setTitle(music.title)
-                    .setAuthor({name: music.artist})
-                    .setThumbnail(music.albumart_url)
-                    .setDescription(`\`${formatPlayingTime(currentTime)}\` ${bar} \`${formatPlayingTime(music.duration)}\``);
+                    .setTitle(music.track ?? "Unknown Title")
+                    .setAuthor({name: music.artist ?? "Unknown Artist"})
+                    .setThumbnail(music.albumart_url ?? "./images/CJ open.jpg")
+                    .setDescription(`\`${formatPlayingTime(parseInt(currentTime))}\` ${bar} \`${formatPlayingTime(parseInt(music.duration))}\``);
 
                 const controls = new ActionRowBuilder().addComponents(
                     new ButtonBuilder().setCustomId("down").setEmoji(emojis.volumeDown).setStyle(ButtonStyle.Secondary),
@@ -130,14 +130,35 @@ client.on("ready", async () => {
                 );
 
                 updatePresence(true, music);
-                await updateStatusMessage(`${MessageCJ}### Now playing:`, nowPlayingEmbed, controls);
+                await updateStatusMessage(`${MessageCJ}`, nowPlayingEmbed, controls);
             } else {
                 updatePresence(false);
-                await updateStatusMessage(`${MessageCJ}### Nothing playing for now.`, null, null, "CJ open.jpg");
+                // TODO: better custom message when nothing is playing ?
+                await updateStatusMessage(`${MessageCJ}### Nothing playing for now.`, null, null, "./images/CJ open.jpg");
+                await channel.messages.fetch(statusMessageID).then(message => {
+                    message.suppressEmbeds(true)
+                    message.components.forEach((control) =>
+                        control.setDisabled(true))
+                })
             }
         }
         // TODO: change with futur backend
-        setInterval(retrieveData(launchedFun), updateTime)
+        setInterval(async () => {
+            fetch(CJ_DATA_LINK)
+                .then(response => {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        return response.json();
+                    } else {
+                        throw new Error("Not a JSON response");
+                    }
+                })
+                .then(data => {
+                    const music = data.playlist[0] || null;
+                    const isPlaying = data.playlist.length > 0;
+                    launchedFun(isPlaying, music, data.time_pos)
+                });
+        }, updateTime)
     }
 
     // CJ Closed
@@ -145,7 +166,7 @@ client.on("ready", async () => {
         client.user.setPresence({status: "offline"});
 
         await updateStatusMessage(
-            "Le CJ est sûrement fermé, mais n'hésites pas à contacter quelqu'un pour l'ouvrir !\nLe CJ hein... pas toi... fin je sais pas mais t'as compris.",
+            "Le CJ est sûrement fermé, mais n'hésites pas à contacter quelqu'un pour l'ouvrir !",
             null,
             null,
             "./images/CJ closed.avif"
@@ -189,7 +210,7 @@ client.on("interactionCreate", async interaction => {
         }
     };
 
-    // Basic cat responses
+    // Basic chat responses
     // TODO: change with futur backend
     const chatResponses = {
         up: `🔼 Volume increased by ${interaction.user.username}`,
